@@ -3,6 +3,8 @@ const app = express();
 const port = 8080;
 const db = require('./routes/db');
 
+app.use(express.static('public'));
+
 const dogsRoute = require('./routes/dogs');
 const walkRequestsRoute = require('./routes/walkrequests');
 const walkersRoute = require('./routes/walkers');
