@@ -3,10 +3,66 @@
 <head>
     <title>Express</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
+    <script src="https://unpkg.com/vue@3"></script>
+    <style>
+      body {
+        background: linear-gradient(to bottom right, #f0f, #0ff);
+        font-family: "Comic Sans MS", cursive, sans-serif;
+        color: yellow;
+      }
+      .button {
+        padding: 20px;
+        font-size: 24px;
+        background-color: red;
+        color: black;
+        border: 5px dashed green;
+        cursor: pointer;
+      }
+      img {
+        width: 600px;
+        height: 400px;
+        border: 10px solid orange;
+      }
+      .info {
+        animation: blink 0.5s infinite;
+      }
+      @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+    </style>
 </head>
 
 <body>
     <h1>Express</h1>
     <p>Welcome to Express</p>
+
+    <div id="app">
+      <h2>DOG OF THE DAY (click fast!!!)</h2>
+      <button class="button" @click="getDog">SEE DOG</button>
+      <div v-if="dogImage">
+        <img :src="dogImage" alt="dog image">
+        <div class="info">DOG NAME: Sir Barkington Woofsalot III</div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp } = Vue;
+      createApp({
+        data() {
+          return {
+            dogImage: ''
+          };
+        },
+        methods: {
+          async getDog() {
+            const res = await fetch('https://dog.ceo/api/breeds/image/random');
+            const data = await res.json();
+            this.dogImage = data.message;
+          }
+        }
+      }).mount('#app');
+    </script>
 </body>
 </html>

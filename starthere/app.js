@@ -1,73 +1,55 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var mysql = require('mysql2/promise');
+const express = require('express');
+const app = express();
+const port = 8080;
+const db = require('./routes/db');
 
-var app = express();
+const dogsRoute = require('./routes/dogs');
+const walkRequestsRoute = require('./routes/walkrequests');
+const walkersRoute = require('./routes/walkers');
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use('/api/dogs', dogsRoute);
+app.use('/api/walkrequests/open', walkRequestsRoute);
+app.use('/api/walkers/summary', walkersRoute);
 
-let db;
 
-(async () => {
+async function insertTestData() {
   try {
-    // Connect to MySQL without specifying a database
-    const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '' // Set your MySQL root password
-    });
-
-    // Create the database if it doesn't exist
-    await connection.query('CREATE DATABASE IF NOT EXISTS testdb');
-    await connection.end();
-
-    // Now connect to the created database
-    db = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'testdb'
-    });
-
-    // Create a table if it doesn't exist
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS books (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(255),
-        author VARCHAR(255)
-      )
+    await db.query(`
+      INSERT IGNORE INTO Users (username, email, password_hash, role) VALUES
+        ('alice123', 'alice@example.com', 'hashed123', 'owner'),
+        ('carol123', 'carol@example.com', 'hashed789', 'owner'),
+        ('bobwalker', 'bob@example.com', 'hashed456', 'walker'),
+        ('newwalker', 'new@example.com', 'hashed000', 'walker')
     `);
 
-    // Insert data if table is empty
-    const [rows] = await db.execute('SELECT COUNT(*) AS count FROM books');
-    if (rows[0].count === 0) {
-      await db.execute(`
-        INSERT INTO books (title, author) VALUES
-        ('1984', 'George Orwell'),
-        ('To Kill a Mockingbird', 'Harper Lee'),
-        ('Brave New World', 'Aldous Huxley')
-      `);
-    }
-  } catch (err) {
-    console.error('Error setting up database. Ensure Mysql is running: service mysql start', err);
-  }
-})();
+    await db.query(`
+      INSERT IGNORE INTO Dogs (owner_id, name, size) VALUES
+        ((SELECT user_id FROM Users WHERE username = 'alice123'), 'Max', 'medium'),
+        ((SELECT user_id FROM Users WHERE username = 'carol123'), 'Bella', 'small')
+    `);
 
-// Route to return books as JSON
-app.get('/', async (req, res) => {
-  try {
-    const [books] = await db.execute('SELECT * FROM books');
-    res.json(books);
+    await db.query(`
+      INSERT IGNORE INTO WalkRequests (dog_id, requested_time, duration_minutes, location, status)
+      VALUES
+        ((SELECT dog_id FROM Dogs WHERE name = 'Max'), '2025-06-10 08:00:00', 30, 'Parklands', 'open'),
+        ((SELECT dog_id FROM Dogs WHERE name = 'Bella'), '2025-06-10 09:30:00', 45, 'Beachside Ave', 'accepted')
+    `);
+
+    await db.query(`
+      INSERT IGNORE INTO WalkRatings (request_id, walker_id, owner_id, rating, comments)
+      VALUES
+        (2, (SELECT user_id FROM Users WHERE username = 'bobwalker'), (SELECT user_id FROM Users WHERE username = 'carol123'), 5, 'Great walk!'),
+        (1, (SELECT user_id FROM Users WHERE username = 'bobwalker'), (SELECT user_id FROM Users WHERE username = 'alice123'), 4, 'Good walker.')
+    `);
+
+    console.log('Test data inserted');
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch books' });
+    console.error('Failed to insert test data:', err.message);
   }
+}
+
+insertTestData();
+
+app.listen(port, '0.0.0.0', () => {
+  console.log('Server is running');
 });
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-module.exports = app;
