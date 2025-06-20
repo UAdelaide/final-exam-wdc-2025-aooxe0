@@ -23,6 +23,10 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { dog_id, requested_time, duration_minutes, location } = req.body;
 
+  if (!dog_id || !requested_time || !duration_minutes || !location) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
   try {
     const [result] = await db.query(`
       INSERT INTO WalkRequests (dog_id, requested_time, duration_minutes, location)
@@ -31,6 +35,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ message: 'Walk request created', request_id: result.insertId });
   } catch (error) {
+    console.error('SQL Error:', error);
     res.status(500).json({ error: 'Failed to create walk request' });
   }
 });
@@ -39,6 +44,10 @@ router.post('/', async (req, res) => {
 router.post('/:id/apply', async (req, res) => {
   const requestId = req.params.id;
   const { walker_id } = req.body;
+
+  if (!walker_id) {
+    return res.status(400).json({ error: 'Missing walker_id' });
+  }
 
   try {
     await db.query(`
