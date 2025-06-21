@@ -20,7 +20,7 @@ router.post('/login', async (req, res) => {
     const user = rows[0];
     req.session.user = user;
 
-    
+
     if (user.role === 'owner') {
       return res.redirect('/owner-dashboard.html');
     } else if (user.role === 'walker') {
@@ -34,5 +34,18 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Login error');
   }
 });
+
+
+router.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout failed:', err);
+      return res.status(500).send('Logout error');
+    }
+    res.clearCookie('connect.sid');
+    res.redirect('/');
+  });
+});
+
 
 module.exports = router;

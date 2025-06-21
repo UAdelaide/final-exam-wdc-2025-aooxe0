@@ -12,6 +12,13 @@
     <h1 class="mb-4 text-primary">Owner Dashboard</h1>
 
 
+
+<div class="text-end mb-3">
+  <form method="POST" action="/auth/logout">
+    <button @click="logout" class="btn btn-outline-danger">Logout</button>
+  </form>
+</div>
+
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">Create New Walk Request</div>
       <div class="card-body">

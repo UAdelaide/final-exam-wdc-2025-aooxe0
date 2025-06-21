@@ -8,6 +8,14 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body class="bg-light">
+
+<div class="text-end mb-3">
+  <form method="POST" action="/auth/logout">
+    <button @click="logout" class="btn btn-outline-danger">Logout</button>
+  </form>
+
+</div>
+
   <div id="app" class="container py-4">
     <h1 class="mb-4 text-success">Walker Dashboard</h1>
 
